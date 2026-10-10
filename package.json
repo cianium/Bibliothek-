@@ -1,0 +1,17 @@
+{
+  "name": "german-library",
+  "private": true,
+  "version": "7.1.1",
+  "description": "Mobile-first curated German learning library for CEFR A1-C2.",
+  "scripts": {
+    "configure": "node scripts/configure.mjs",
+    "build": "node scripts/build.mjs",
+    "qa": "python3 tools/qa.py && node tools/content-qa.mjs && node tools/backend-sync-qa.mjs",
+    "release:check": "npm run qa && npm run build && npm run verify:dist",
+    "serve": "python3 -m http.server 8080",
+    "verify:dist": "node tools/dist-qa.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

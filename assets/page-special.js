@@ -1,0 +1,1 @@
+GL.boot(()=>{const c=GL.getContent(),rows=GL.getSpecialCourses(c),slot=document.getElementById('specialGrid');slot.innerHTML=rows.length?rows.map(x=>GL.courseCard(x,c)).join(''):'<div class="neo-card empty-state"><h3>هنوز کتاب ویژه‌ای ثبت نشده</h3><p>مدیر سایت می‌تواند کتاب چندسطحی یا مرجع جدیدی به این بخش اضافه کند.</p></div>'});

@@ -1,0 +1,6 @@
+German Library 7.1.1
+Baseline: user-provided V7.1
+Reviewed: 2026-10-08
+Status: Ready for staging, not live-production verified
+See docs/AUDIT_AND_RELEASE_FA.md for scope, fixes, tests and blockers.
+Includes source, SQL, QA and screenshots. Excludes test dist and temporary browser dependencies.

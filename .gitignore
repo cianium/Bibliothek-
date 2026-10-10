@@ -1,0 +1,8 @@
+.env
+.env.*
+!.env.example
+dist/
+.vercel/
+.DS_Store
+*.log
+*.bak

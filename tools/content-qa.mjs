@@ -1,0 +1,38 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import path from 'node:path';
+
+const root=path.resolve(import.meta.dirname,'..');
+const store=new Map();
+globalThis.window={};
+globalThis.location={search:'',protocol:'http:',hostname:'localhost'};
+globalThis.localStorage={getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,String(v)),removeItem:k=>store.delete(k)};
+globalThis.document={addEventListener(){},querySelectorAll(){return[]},createElement(){return {setAttribute(){},remove(){},style:{}}},body:{appendChild(){}}};
+globalThis.CustomEvent=class{constructor(name,opts){this.type=name;this.detail=opts?.detail}};
+globalThis.URL=URL;
+globalThis.URLSearchParams=URLSearchParams;
+vm.runInThisContext(fs.readFileSync(path.join(root,'data/content.js'),'utf8'),{filename:'data/content.js'});
+vm.runInThisContext(fs.readFileSync(path.join(root,'assets/app.js'),'utf8'),{filename:'assets/app.js'});
+const content=window.GL.normalizeContent(window.GERMAN_LIBRARY_CONTENT);
+const result=window.GL.validateContent(content);
+const published=content.resources.filter(r=>r.status==='published');
+const dead=published.filter(r=>!r.storagePath&&!window.GL.safeExternalUrl(r.url));
+const counts={levels:Object.keys(content.levels).length,courses:content.courses.length,resources:content.resources.length,published:published.length,specialBooks:content.courses.filter(c=>c.collection==='special').length};
+console.log('Content QA:',JSON.stringify(counts));
+for(const e of result.errors) console.error('ERROR:',e);
+for(const w of result.warnings) console.warn('WARN :',w);
+if(dead.length) console.error('ERROR: published resources without access target:',dead.map(x=>x.id).join(', '));
+if(result.errors.length||dead.length) process.exit(1);
+
+const assert=(condition,message)=>{if(!condition)throw new Error(message)};
+const GL=window.GL;
+assert(GL.getRoadmap(content,'B2').every(step=>step.label!=='Kursbuch'),'missing core book appeared in roadmap');
+assert(GL.getRoadmap(content,'A2')[0].label==='Kursbuch','core roadmap does not begin with coursebook');
+const draft=GL.clone(content);draft.courses[0].status='draft';
+assert(!GL.getPublishedResources(draft).some(r=>r.courseId===draft.courses[0].id),'draft parent resources leaked');
+window.GL_CONFIG={supabaseUrl:'https://example.supabase.co'};
+store.set(GL.CONTENT_KEY,JSON.stringify(draft));
+assert(GL.getContent().courses[0].status==='published','cloud mode trusted demo cache');
+const writes=store.size;GL.saveContent(draft,{sync:false});assert(store.size===writes,'cloud snapshot persisted to shared demo cache');
+GL.clearCloudContent();assert(GL.getContent().courses[0].status==='published','logout retained private snapshot');
+console.log('Content regressions: roadmap, parent visibility, cloud cache isolation passed');
